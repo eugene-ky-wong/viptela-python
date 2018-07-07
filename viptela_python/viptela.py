@@ -333,7 +333,7 @@ class Viptela(object):
         return (self._post(self.session, url, data=json.dumps(payload)))
             #, payload, self.session.cookies)
 
-    def check_upgrade(self, status_url):
+    def check_status(self, status_url):
         """
         Get software install status
         :return: Result named tuple
