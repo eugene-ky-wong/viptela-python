@@ -300,7 +300,7 @@ class Viptela(object):
             ],
             'deviceType':'vedge'
         }
-        url = '{0}/device/action/install'.format(self.base_url)
+        url = '{0}/device/action/changepartition'.format(self.base_url)
         return (self._post(self.session, url, data=json.dumps(payload)))
 
     def upgrade(self, version, ip_address, device_uuid):
@@ -347,7 +347,7 @@ class Viptela(object):
         Get software install status
         :return: Result named tuple
         """
-        url = '{0}/device/action/install/devices/vedge?groupId=allstatus/'.format(self.base_url)
+        url = '{0}/device/action/install/devices/vedge?groupId=all'.format(self.base_url)
         return self._get(self.session, url)
 
     def get_banner(self):
