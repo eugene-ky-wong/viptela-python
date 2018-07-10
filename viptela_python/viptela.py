@@ -342,7 +342,7 @@ class Viptela(object):
             status_url)
         return self._get(self.session, url)
 
-    def check_firmware(self, status_url):
+    def check_firmware(self):
         """
         Get software install status
         :return: Result named tuple
