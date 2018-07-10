@@ -342,6 +342,14 @@ class Viptela(object):
             status_url)
         return self._get(self.session, url)
 
+    def check_firmware(self, status_url):
+        """
+        Get software install status
+        :return: Result named tuple
+        """
+        url = '{0}/device/action/install/devices/vedge?groupId=allstatus/'.format(self.base_url)
+        return self._get(self.session, url)
+
     def get_banner(self):
         """
         Get vManager banner
