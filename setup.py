@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="viptela_python",
-    version="0.1.4",
+    version="0.1.5",
     author="Eugene KY Wong",
     author_email="morphyme@gmail.com",
     description="This is the Cisco Viptela Python SDK",
