@@ -6,4 +6,5 @@ build
 dist
 .eggs
 .git
+vault.yml
 

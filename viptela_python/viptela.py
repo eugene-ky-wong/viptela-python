@@ -350,6 +350,14 @@ class Viptela(object):
         url = '{0}/device/action/install/devices/vedge?groupId=all'.format(self.base_url)
         return self._get(self.session, url)
 
+    def get_template_device(self):
+        """
+        Get device templates
+        :return: Result named tuple
+        """
+        url = '{0}/template/device'.format(self.base_url)
+        return self._get(self.session, url)
+
     def get_banner(self):
         """
         Get vManager banner
