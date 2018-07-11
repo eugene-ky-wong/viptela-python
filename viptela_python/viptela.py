@@ -130,7 +130,7 @@ class Viptela(object):
         if headers is None:
             headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
 
-        return parse_response(session.get(url=url, headers=headers, timeout=timeout))
+        return (parse_response(session.get(url=url, headers=headers, timeout=timeout)), url, '')
 
     @staticmethod
     def _put(session, url, headers=None, data=None, timeout=10):
@@ -150,7 +150,7 @@ class Viptela(object):
         if data is None:
             data = dict()
 
-        return parse_response(session.put(url=url, headers=headers, data=data, timeout=timeout))
+        return (parse_response(session.put(url=url, headers=headers, data=data, timeout=timeout)), url, data)
 
     @staticmethod
     def _post(session, url, headers=None, data=None, timeout=10):
@@ -170,7 +170,7 @@ class Viptela(object):
         if data is None:
             data = dict()
 
-        return parse_response(session.post(url=url, headers=headers, data=data, timeout=timeout))
+        return (parse_response(session.post(url=url, headers=headers, data=data, timeout=timeout)), url, data)
 
     @staticmethod
     def _upload(session, url, files, headers=None, data=None, timeout=15):
@@ -190,7 +190,7 @@ class Viptela(object):
         if data is None:
             data = dict()
 
-        return parse_response(session.post(url=url, headers=headers, files=files, timeout=timeout))
+        return (parse_response(session.post(url=url, headers=headers, files=files, timeout=timeout)), url, '')
 
     @staticmethod
     def _delete(session, url, headers=None, data=None, timeout=10):
@@ -257,7 +257,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         try:
-            login_result = self._post(
+            (login_result,url,payload) = self._post(
                 session=self.session,
                 url='{0}/j_security_check'.format(self.base_url),
                 headers={'Content-Type': 'application/x-www-form-urlencoded'},
@@ -371,8 +371,38 @@ class Viptela(object):
         Get device template device specification
         :return: Result named tuple
         """
-        url = '{0}/template/policy/vedge/{1}'.format(self.base_url,template_id)
+        url = '{0}/template/device/object/{1}'.format(self.base_url,template_id)
         return self._get(self.session, url)
+
+    def set_policy_in_template(self, template_id, template_name, policy_id):
+        """
+        Set Policy into Template
+        :return: Result named tuple
+        """
+        payload={
+            'configType': 'template',
+            'connectionPreference': True,
+            'connectionPreferenceRequired': True,
+            'deviceType': 'vedge-100-B',
+            'factoryDefault': False,
+            'featureTemplateUidRange': [
+              {
+                'templateId': '72d5bb38-066a-4a0f-9f9c-d5156d84da2e',
+                "templateIdRange": "1",
+                "templateType": "bridge",
+                "uniqueKey": "bridge-id"
+              }
+            ],
+            'policyId': policy_id,
+            'policyRequired': True,
+            'templateDescription': template_name,
+            'templateId': template_id,
+            'templateName': template_name
+        }
+        url = '{0}/template/device/{1}'.format(self.base_url,template_id)
+        return (self._put(self.session, url, data=json.dumps(payload)))
+
+#    def set_template_in_device(self):
 
     def get_banner(self):
         """
