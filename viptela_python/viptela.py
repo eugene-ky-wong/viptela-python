@@ -358,7 +358,7 @@ class Viptela(object):
         url = '{0}/template/device'.format(self.base_url)
         return self._get(self.session, url)
 
-    def get_template_policy_vedge(self)
+    def get_template_policy_vedge(self):
         """
         Get device template policies
         :return: Result named tuple
@@ -366,7 +366,7 @@ class Viptela(object):
         url = '{0}/template/policy/vedge'.format(self.base_url)
         return self._get(self.session, url)
 
-    def get_template_device_object(self, template_id)
+    def get_template_device_object(self, template_id):
         """
         Get device template device specification
         :return: Result named tuple
