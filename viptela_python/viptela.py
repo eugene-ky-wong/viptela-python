@@ -1,5 +1,6 @@
 import json
 import requests
+import ast
 
 from collections import namedtuple
 from requests.exceptions import ConnectionError
@@ -25,7 +26,7 @@ HTTP_RESPONSE_CODES.update(HTTP_ERROR_CODES)
 
 # parse_response will return a namedtuple object
 Result = namedtuple('Result', [
-    'ok', 'status_code', 'error', 'reason', 'data', 'response'
+    'ok', 'status_code', 'error', 'reason', 'data', 'response', 'text'
 ])
 
 
@@ -35,10 +36,11 @@ def parse_http_success(response):
     :param response: requests response object
     :return: namedtuple result object
     """
+    text = response.text
     if response.request.method in ['GET']:
         reason = HTTP_RESPONSE_CODES[response.status_code]
         error = ''
-        json_response = response.text
+        # json_response = response.text
         if response.json().get('data'):
             json_response = response.json()['data']
         elif response.json().get('config'):
@@ -46,7 +48,8 @@ def parse_http_success(response):
         elif response.json().get('templateDefinition'):
             json_response = response.json()['templateDefinition']
         else:
-            json_response = dict()
+            #json_response = dict()
+            json_response = json.loads(response.text)
             reason = HTTP_RESPONSE_CODES[response.status_code]
             error = 'No data received from device'
     elif response.text in ['']:
@@ -70,6 +73,7 @@ def parse_http_success(response):
         error=error,
         data=json_response,
         response=response,
+        text=text
     )
     return result
 
@@ -80,6 +84,7 @@ def parse_http_error(response):
     :param response: requests response object
     :return: namedtuple result object
     """
+    text = response.text
     try:
         json_response = dict()
         reason = response.json()['error']['details']
@@ -96,6 +101,7 @@ def parse_http_error(response):
         error=error,
         data=json_response,
         response=response,
+        text=text
     )
     return result
 
@@ -210,7 +216,8 @@ class Viptela(object):
         if data is None:
             data = dict()
 
-        pass
+        #pass
+        return (parse_response(session.delete(url=url, headers=headers, timeout=timeout)), url, '')
 
     def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443,
                  verify=False, disable_warnings=False, timeout=10, auto_login=True):
@@ -374,35 +381,93 @@ class Viptela(object):
         url = '{0}/template/device/object/{1}'.format(self.base_url,template_id)
         return self._get(self.session, url)
 
-    def set_policy_in_template(self, template_id, template_name, policy_id):
+    def set_policy_in_template(self, template_id, template, policy_id):
         """
         Set Policy into Template
         :return: Result named tuple
         """
-        payload={
-            'configType': 'template',
-            'connectionPreference': True,
-            'connectionPreferenceRequired': True,
-            'deviceType': 'vedge-100-B',
-            'factoryDefault': False,
-            'featureTemplateUidRange': [
-              {
-                'templateId': '72d5bb38-066a-4a0f-9f9c-d5156d84da2e',
-                "templateIdRange": "1",
-                "templateType": "bridge",
-                "uniqueKey": "bridge-id"
-              }
-            ],
-            'policyId': policy_id,
-            'policyRequired': True,
-            'templateDescription': template_name,
-            'templateId': template_id,
-            'templateName': template_name
-        }
+        payload=ast.literal_eval(template)
+        payload["policyId"] = policy_id
+
         url = '{0}/template/device/{1}'.format(self.base_url,template_id)
         return (self._put(self.session, url, data=json.dumps(payload)))
 
-#    def set_template_in_device(self):
+    def set_policy_in_template2(self, template_id, template, policy_id):
+        """
+        Set Policy into Template Intermediary Steps
+        :return: Result named tuple
+        """
+        template_dict = ast.literal_eval(template)
+        deviceIds=([(e['uuid']) for e in template_dict])
+        payload={ 
+            "deviceIds":deviceIds, 
+            "isEdited": True,
+            "isMasterEdited": True,
+            "templateId":template_id
+        }
+
+        url = '{0}/template/device/config/input/'.format(self.base_url)
+        return (self._post(self.session, url, data=json.dumps(payload)))
+
+    def set_policy_in_template3(self, template_id, template, policy_id):
+        """
+        Set Policy into Template Intermediary Steps
+        :return: Result named tuple
+        """
+        template_dict = ast.literal_eval(template)
+        array=['csv-deviceId','csv-deviceIP','csv-host-name']
+        devices=[{array[i]: e[array[i]] for i in range(0,len(array))} for e in template_dict]
+
+        payload={
+            "device":devices
+        }
+
+        url = '{0}/template/device/config/duplicateip'.format(self.base_url)
+        return (self._post(self.session, url, data=json.dumps(payload)))
+
+    def attach_feature_to_devices(self, template_id, template, policy_id):
+        """
+        Attaches feature templates to devices
+        :return: Result named tuple
+        """
+        template_dict = ast.literal_eval(template)
+        #payload2=[{array[i]: e[array[i]] for i in range(0,3)} for e in template_dict]
+
+        #array=['csv-deviceId','csv-deviceIP','csv-host-name','csv-status']
+        #[template_dict[i].pop(array[j], 0) for j in range(0,len(array)) for i in range(0,len(template_dict))]
+
+        for i in range(0,len(template_dict)):
+          template_dict[i]["csv-templateId"]=template_id #for i in range(0,len(template_dict))
+
+        payload={
+          "deviceTemplateList":[{
+            "device":template_dict,
+            "isEdited":True,
+            "isMasterEdited":True,
+            "templateId":template_id
+          }]
+        }
+        #payload = {'mode': 'on', 'bannerDetail': payload} #template_dict}
+        #url = '{0}/settings/configuration/banner'.format(self.base_url)
+        #return self._put(self.session, url, data=json.dumps(payload))
+
+        url = '{0}/template/device/config/attachfeature'.format(self.base_url)
+        return (self._post(self.session, url, data=json.dumps(payload)))
+
+    def delete_push_feature(self, status_url):
+        """
+        Deletes the current push_feature_template_configuration job
+        :return: Result named tuple
+        """
+        #payload=ast.literal_eval(template)
+        #payload2={k: payload[k] for k in ('deviceIp')}
+
+        #payload = {'mode': 'on', 'bannerDetail': payload2}
+        #url = '{0}/settings/configuration/banner'.format(self.base_url)
+        #return self._put(self.session, url, data=json.dumps(payload))
+        
+        url = '{0}/template/lock/{1}'.format(self.base_url,status_url)
+        return (self._delete(self.session, url))
 
     def get_banner(self):
         """
