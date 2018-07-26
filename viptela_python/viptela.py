@@ -736,3 +736,14 @@ class Viptela(object):
         else:
             url = '{0}/template/feature'.format(self.base_url)
         return self._get(self.session, url)
+
+    def get_device_interface(self, device_id):
+        """
+        Get device interface statistics
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/interface/?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+
