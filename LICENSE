@@ -167,8 +167,8 @@ Library.
 
 ---
 
-viptela.py was adapted and modified from the file from the same name
-from the Github repostory listed below and adapted with increased 
-functionality and error handling capabilities.
+viptela.py and exception.py was adapted and modified from the files
+of the same name from the Github repostory listed below and adapted 
+with increased  functionality and error handling capabilities.
 
 Github repostory: bobthebutcher/viptela
